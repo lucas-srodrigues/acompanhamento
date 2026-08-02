@@ -1,0 +1,44 @@
+                    else if (g === "P") { globalScoreSum += 50; globalEvaluatedCount++; }
+                    else if (g === "N") { globalScoreSum += 0; globalEvaluatedCount++; }
+                });
+            });
+
+            const globalAvg = globalEvaluatedCount > 0 ? Math.round(globalScoreSum / globalEvaluatedCount) : 0;
+            document.getElementById("statAvgCompletion").innerText = `${globalAvg}%`;
+        }
+
+        function getBadgeHtml(code) {
+            switch(code) {
+                case "C":
+                    return `<span class="badge badge-C" title="Atende completamente os requisitos">✓</span>`;
+                case "P":
+                    return `<span class="badge badge-P" title="Atende parcialmente os requisitos">~</span>`;
+                case "N":
+                    return `<span class="badge badge-N" title="Não atende / Não entregou os requisitos">✕</span>`;
+                default:
+                    return `<span class="badge badge-PENDING" title="Atividade pendente / Não realizada">-</span>`;
+            }
+        }
+
+        function filterStudents() {
+            const query = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.querySelectorAll("#tableBody tr");
+
+            rows.forEach(row => {
+                const nameTd = row.querySelector(".student-name");
+                if (nameTd) {
+                    const nameText = nameTd.innerText.toLowerCase();
+                    if (nameText.includes(query)) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                }
+            });
+        }
+
+        // Inicializar aplicação
+        window.addEventListener("DOMContentLoaded", renderApp);
+    </script>
+</body>
+</html>
