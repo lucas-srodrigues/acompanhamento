@@ -1,3 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Evolução Acadêmica - Semestre Letivo</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            
+            /* Status Colors */
+            --status-complete-bg: #dcfce7;
+            --status-complete-text: #15803d;
+            --status-complete-border: #86efac;
+            
+            --status-partial-bg: #fef3c7;
+            --status-partial-text: #b45309;
+            --status-partial-border: #fde047;
+            
+            --status-none-bg: #fee2e2;
+            --status-none-text: #b91c1c;
+            --status-none-border: #fca5a5;
+
+            --status-pending-bg: #f1f5f9;
+            --status-pending-text: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 24px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header section */
+        header {
+            background-color: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .header-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Legend */
+        .legend-container {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid transparent;
+        }
+
+        .legend-complete {
+            background-color: var(--status-complete-bg);
+            color: var(--status-complete-text);
+            border-color: var(--status-complete-border);
+        }
+
+        .legend-partial {
+            background-color: var(--status-partial-bg);
+            color: var(--status-partial-text);
+            border-color: var(--status-partial-border);
+        }
+
+        .legend-none {
+            background-color: var(--status-none-bg);
+            color: var(--status-none-text);
+            border-color: var(--status-none-border);
+        }
+
+        /* Stats Bar */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 16px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        .stat-card .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+
+        /* Search & Controls */
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 16px;
+        }
+
+        .search-input {
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            width: 300px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Table Container */
+        .table-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        thead th {
+            background-color: #f1f5f9;
+            color: #334155;
+            padding: 12px 10px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            vertical-align: bottom;
+            white-space: nowrap;
+        }
+
+        thead th.student-col {
+            position: sticky;
+            left: 0;
+            background-color: #f1f5f9;
+            z-index: 10;
+            width: 240px;
+            min-width: 200px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+        }
+
+        thead th.activity-col {
+            text-align: center;
+            min-width: 110px;
+            max-width: 140px;
+        }
+
+        .act-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .act-title {
+            display: block;
+            font-size: 0.825rem;
+            line-height: 1.2;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.15s;
+        }
+
+        tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        td.student-name {
+            position: sticky;
+            left: 0;
+            background-color: var(--card-bg);
+            z-index: 5;
+            font-weight: 600;
+            color: var(--text-main);
+            padding: 12px 16px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+            white-space: nowrap;
+        }
+
+        tbody tr:hover td.student-name {
+            background-color: #f8fafc;
+        }
+
+        td.status-cell {
+            text-align: center;
+            padding: 8px;
+            vertical-align: middle;
+        }
+
+        /* Status Badges in Cells */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border: 1px solid transparent;
+            transition: transform 0.1s ease;
+            cursor: default;
+        }
+
+        .badge:hover {
+            transform: scale(1.1);
+        }
+
+        .badge-C {
+            background-color: var(--status-complete-bg);
+            color: var(--status-complete-text);
+            border-color: var(--status-complete-border);
+        }
+
+        .badge-P {
+            background-color: var(--status-partial-bg);
+            color: var(--status-partial-text);
+            border-color: var(--status-partial-border);
+        }
+
+        .badge-N {
+            background-color: var(--status-none-bg);
+            color: var(--status-none-text);
+            border-color: var(--status-none-border);
+        }
+
+        .badge-PENDING {
+            background-color: var(--status-pending-bg);
+            color: var(--status-pending-text);
+            font-size: 0.75rem;
+        }
+
+        /* Progress Bar Column */
+        td.progress-col, th.progress-col {
+            text-align: center;
+            min-width: 100px;
+            padding: 12px;
+        }
+
+        .progress-bar-bg {
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            height: 8px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Instructions Collapsible for Teacher */
+        .teacher-guide {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-top: 24px;
+            color: #1e40af;
+            font-size: 0.9rem;
+        }
+
+        .teacher-guide h3 {
+            margin-bottom: 8px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .teacher-guide code {
+            background-color: #dbeafe;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 32px;
+            padding-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-title">
+                <div>
+                    <h1 id="courseTitle">Acompanhamento de Entregas e Evolução</h1>
+                    <p class="subtitle" id="courseSubtitle">Acompanhe seu desempenho nas atividades ao longo do semestre</p>
+                </div>
+            </div>
+
+            <!-- Legenda -->
+            <div class="legend-container">
+                <div class="legend-item legend-complete">
+                    <span>✓</span> <strong>Atende completamente</strong> os requisitos
+                </div>
+                <div class="legend-item legend-partial">
+                    <span>~</span> <strong>Atende parcialmente</strong> os requisitos
+                </div>
+                <div class="legend-item legend-none">
+                    <span>✕</span> <strong>Não atende / Não entregue</strong>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Total de Alunos</div>
+                <div class="value" id="statTotalStudents">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Atividades Mapeadas</div>
+                <div class="value" id="statTotalActivities">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Média Geral do APROVEITAMENTO</div>
+                <div class="value" id="statAvgCompletion">0%</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-bar">
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar aluno por nome..." onkeyup="filterStudents()">
+        </div>
+
+        <!-- Table -->
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr id="tableHeader">
+                        <!-- Gerado via JavaScript -->
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Gerado via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Guia do Professor -->
+        <div class="teacher-guide">
+            <h3>💡 Área do Professor: Como atualizar a lista e atividades</h3>
+            <p>Para adicionar/remover alunos ou atividades, abra este arquivo (<code>index.html</code>) em um editor de texto e edite o bloco JavaScript no final do arquivo (variáveis <code>ACTIVITIES</code> e <code>STUDENTS</code>):</p>
+            <ul style="margin-left: 20px; margin-top: 8px;">
+                <li><strong>Adicionar/Remover Atividades:</strong> Edite a lista <code>ACTIVITIES</code>. Altere o título e a data.</li>
+                <li><strong>Adicionar/Remover Alunos:</strong> Adicione ou remova objetos na lista <code>STUDENTS</code>.</li>
+                <li><strong>Valores possíveis para entregas:</strong>
+                    <code>"C"</code> (Completamente), 
+                    <code>"P"</code> (Parcialmente), 
+                    <code>"N"</code> (Não atende/Não entregue), 
+                    <code>"-"</code> (Ainda não realizada/Pendente).
+                </li>
+            </ul>
+        </div>
+
+        <footer>
+            Painel atualizado automaticamente via GitHub Pages • Semestre Letivo
+        </footer>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           CONFIGURAÇÕES DO PROFESSOR (EDITE AQUI OS DADOS)
+           ========================================================================== */
+
+        const CONFIG = {
+            courseTitle: "Acompanhamento de Evolução - Algoritmos e Programação",
+            courseSubtitle: "Visualização individual das entregas de atividades práticas"
+        };
+
+        // Lista de Colunas / Atividades (Data e Título)
+        const ACTIVITIES = [
+            { id: "A1", date: "10/08", title: "Atividade 1: Lógica Básica" },
+            { id: "A2", date: "17/08", title: "Atividade 2: Condicionais" },
+            { id: "A3", date: "24/08", title: "Atividade 3: Estruturas de Repetição" },
+            { id: "A4", date: "31/08", title: "Atividade 4: Vetores e Matrizes" },
+            { id: "A5", date: "14/09", title: "Atividade 5: Funções e Módulos" },
+            { id: "A6", date: "21/09", title: "Atividade 6: Manipulação de Strings" },
+            { id: "A7", date: "05/10", title: "Atividade 7: Arquivos e I/O" },
+            { id: "A8", date: "19/10", title: "Atividade 8: Estruturas de Dados" },
+            { id: "A9", date: "09/11", title: "Atividade 9: Algoritmos de Busca" },
+            { id: "A10", date: "23/11", title: "Atividade 10: Projeto Final" }
+        ];
+
+        // Legenda dos Códigos de Entrega:
+        // "C" = Atende Completamente
+        // "P" = Atende Parcialmente
+        // "N" = Não Atende / Não Entregue
+        // "-" = Atividade ainda não realizada/Pendente
+
+        const STUDENTS = [
+            { name: "Ana Beatriz Sousa", grades: ["C", "C", "C", "P", "C", "C", "C", "-", "-", "-"] },
+            { name: "Bruno Carvalho Lima", grades: ["C", "P", "C", "N", "P", "C", "P", "-", "-", "-"] },
+            { name: "Carlos Eduardo Santos", grades: ["C", "C", "C", "C", "C", "C", "C", "-", "-", "-"] },
+            { name: "Daniela Oliveira Rocha", grades: ["P", "P", "C", "C", "P", "P", "C", "-", "-", "-"] },
+            { name: "Gabriel Ferreira Costa", grades: ["N", "P", "N", "N", "P", "N", "N", "-", "-", "-"] },
+            { name: "Fernanda Ribeiro Alves", grades: ["C", "C", "C", "C", "P", "C", "C", "-", "-", "-"] },
+            { name: "Guilherme Martins Pereira", grades: ["C", "P", "P", "P", "C", "P", "P", "-", "-", "-"] },
+            { name: "Helena Castro Silveira", grades: ["C", "C", "C", "C", "C", "C", "P", "-", "-", "-"] },
+            { name: "Igor Gomes Machado", grades: ["P", "N", "P", "C", "N", "P", "N", "-", "-", "-"] },
+            { name: "Juliana Mendes Freitas", grades: ["C", "C", "P", "C", "C", "C", "C", "-", "-", "-"] },
+            { name: "Lucas Barbosa Lima", grades: ["C", "C", "C", "C", "C", "P", "C", "-", "-", "-"] },
+            { name: "Mariana Azevedo Ramos", grades: ["C", "P", "C", "C", "P", "C", "P", "-", "-", "-"] },
+            { name: "Nicolas Cardoso Dias", grades: ["N", "N", "P", "P", "N", "N", "P", "-", "-", "-"] },
+            { name: "Patricia Vieira Araujo", grades: ["C", "C", "C", "P", "C", "C", "C", "-", "-", "-"] },
+            { name: "Rafael Monteiro Nunes", grades: ["P", "C", "C", "C", "P", "P", "C", "-", "-", "-"] },
+            { name: "Sofia Fernandes Correa", grades: ["C", "C", "C", "C", "C", "C", "C", "-", "-", "-"] },
+            { name: "Thiago Moreira Andrade", grades: ["P", "P", "N", "P", "N", "P", "N", "-", "-", "-"] },
+            { name: "Vanessa Teixeira Farias", grades: ["C", "C", "P", "C", "C", "P", "C", "-", "-", "-"] },
+            { name: "Victor Hugo Rodrigues", grades: ["C", "N", "C", "P", "C", "C", "N", "-", "-", "-"] },
+            { name: "Yasmin Duarte Nascimento", grades: ["C", "C", "C", "C", "C", "C", "C", "-", "-", "-"] }
+        ];
+
+        /* ==========================================================================
+           LÓGICA DE RENDERIZAÇÃO
+           ========================================================================== */
+
+        function renderApp() {
+            // Configurar títulos
+            document.getElementById("courseTitle").innerText = CONFIG.courseTitle;
+            document.getElementById("courseSubtitle").innerText = CONFIG.courseSubtitle;
+
+            // Renderizar Cabeçalho da Tabela
+            const headerRow = document.getElementById("tableHeader");
+            headerRow.innerHTML = `
+                <th class="student-col">Nome do Aluno</th>
+                ${ACTIVITIES.map(act => `
+                    <th class="activity-col" title="${act.title}">
+                        <span class="act-date">${act.date}</span>
+                        <span class="act-title">${act.title}</span>
+                    </th>
+                `).join('')}
+                <th class="progress-col">Desempenho</th>
+            `;
+
+            // Renderizar Linhas da Tabela
+            const body = document.getElementById("tableBody");
+            body.innerHTML = STUDENTS.map(student => {
+                const totalEvaluated = student.grades.filter(g => g !== "-").length;
+                let scoreSum = 0;
+
+                student.grades.forEach(g => {
+                    if (g === "C") scoreSum += 100;
+                    else if (g === "P") scoreSum += 50;
+                    else if (g === "N") scoreSum += 0;
+                });
+
+                const percentage = totalEvaluated > 0 ? Math.round(scoreSum / totalEvaluated) : 0;
+
+                return `
+                    <tr>
+                        <td class="student-name">${student.name}</td>
+                        ${student.grades.slice(0, ACTIVITIES.length).map(g => `
+                            <td class="status-cell">
+                                ${getBadgeHtml(g)}
+                            </td>
+                        `).join('')}
+                        <!-- Caso haja menos notas do que atividades salvas -->
+                        ${Array(Math.max(0, ACTIVITIES.length - student.grades.length)).fill('<td class="status-cell">' + getBadgeHtml("-") + '</td>').join('')}
+                        
+                        <td class="progress-col">
+                            <span class="progress-text">${percentage}%</span>
+                            <div class="progress-bar-bg" title="${percentage}% de aproveitamento nas entregas">
+                                <div class="progress-bar-fill" style="width: ${percentage}%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Atualizar Estatísticas Gerais
+            document.getElementById("statTotalStudents").innerText = STUDENTS.length;
+            document.getElementById("statTotalActivities").innerText = ACTIVITIES.length;
+
+            let globalScoreSum = 0;
+            let globalEvaluatedCount = 0;
+
+            STUDENTS.forEach(s => {
+                s.grades.slice(0, ACTIVITIES.length).forEach(g => {
+                    if (g === "C") { globalScoreSum += 100; globalEvaluatedCount++; }
                     else if (g === "P") { globalScoreSum += 50; globalEvaluatedCount++; }
                     else if (g === "N") { globalScoreSum += 0; globalEvaluatedCount++; }
                 });
