@@ -1,5 +1,3 @@
----
-
 ```markdown
 # 📊 NEXO - Faturamento Inteligente
 
